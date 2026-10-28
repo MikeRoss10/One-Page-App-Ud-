@@ -84,7 +84,7 @@ export default function AdminDashboard() {
 
         <input
           className="search"
-          placeholder="Search name, email, phone, postcode or reference…"
+          placeholder="Search name, phone, email, ref…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -94,36 +94,54 @@ export default function AdminDashboard() {
         ) : visible.length === 0 ? (
           <div className="card center muted">No submissions yet.</div>
         ) : (
-          <div className="table-wrap card">
-            <table>
-              <thead>
-                <tr>
-                  <th>Received</th>
-                  <th>Customer</th>
-                  <th>Contact</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => (
-                  <tr key={r.id} onClick={() => setSelected(r)} className={selected?.id === r.id ? 'selected' : ''}>
-                    <td>{fmtDate(r.created_at)}</td>
-                    <td>
+          <>
+            <ul className="mobile-list">
+              {visible.map((r) => (
+                <li key={r.id}>
+                  <button className="mobile-item card" onClick={() => setSelected(r)}>
+                    <div className="mobile-item-top">
                       <strong>{r.full_name}</strong>
-                      <div className="muted small">#{r.id.slice(0, 8).toUpperCase()}{r.postcode ? ` · ${r.postcode}` : ''}</div>
-                    </td>
-                    <td>
-                      {r.email}
-                      <div className="muted small">{r.phone}</div>
-                    </td>
-                    <td className="cap">{r.bill_type}</td>
-                    <td><span className={`badge badge-${r.status}`}>{STATUS_LABEL[r.status]}</span></td>
+                      <span className={`badge badge-${r.status}`}>{STATUS_LABEL[r.status]}</span>
+                    </div>
+                    <div className="muted small">{r.phone} · {r.email}</div>
+                    <div className="muted small">
+                      <span className="cap">{r.bill_type}</span>{r.postcode ? ` · ${r.postcode}` : ''} · {fmtDate(r.created_at)}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="table-wrap card">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Received</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Type</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {visible.map((r) => (
+                    <tr key={r.id} onClick={() => setSelected(r)} className={selected?.id === r.id ? 'selected' : ''}>
+                      <td>{fmtDate(r.created_at)}</td>
+                      <td>
+                        <strong>{r.full_name}</strong>
+                        <div className="muted small">#{r.id.slice(0, 8).toUpperCase()}{r.postcode ? ` · ${r.postcode}` : ''}</div>
+                      </td>
+                      <td>
+                        {r.email}
+                        <div className="muted small">{r.phone}</div>
+                      </td>
+                      <td className="cap">{r.bill_type}</td>
+                      <td><span className={`badge badge-${r.status}`}>{STATUS_LABEL[r.status]}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

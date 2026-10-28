@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { cors, escapeHtml, sendEmail, sendSms, supabaseAdmin, type Submission } from './_lib/server.js';
+import { cors, escapeHtml, sendEmail, sendSms, supabaseAs, type Submission } from './_lib/server.js';
 
 const STATUS_COPY: Record<string, { subject: string; text: string }> = {
   reviewing: { subject: 'We are reviewing your bill', text: 'our team has started reviewing your bill.' },
@@ -14,22 +14,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const token = (req.headers.authorization ?? '').replace(/^Bearer /, '');
-  const { data: userData } = await supabaseAdmin.auth.getUser(token);
-  const user = userData?.user;
-  if (!user) return res.status(401).json({ error: 'Not logged in' });
+  if (!token) return res.status(401).json({ error: 'Not logged in' });
+  const db = supabaseAs(token);
 
-  const { data: admin } = await supabaseAdmin.from('admins').select('user_id').eq('user_id', user.id).maybeSingle();
-  if (!admin) return res.status(403).json({ error: 'Not an admin' });
+  const { data: isAdmin, error: authError } = await db.rpc('is_admin');
+  if (authError) return res.status(401).json({ error: 'Not logged in' });
+  if (!isAdmin) return res.status(403).json({ error: 'Not an admin' });
 
   const { id, sms = true, email = true } = req.body ?? {};
-  const { data: sub } = await supabaseAdmin
+  // Row level security only lets admins read submissions.
+  const { data: sub } = await db
     .from('submissions')
-    .select('id, created_at, full_name, email, phone, postcode, bill_type, message, status, notified_at')
+    .select('id, full_name, email, phone, postcode, bill_type, message, status')
     .eq('id', id)
     .single<Submission>();
   if (!sub) return res.status(404).json({ error: 'Submission not found' });
 
-  const copy = STATUS_COPY[sub.status];
+  const copy = STATUS_COPY[sub.status ?? ''];
   if (!copy) return res.status(400).json({ error: `No customer message for status "${sub.status}"` });
 
   const firstName = sub.full_name.split(' ')[0];

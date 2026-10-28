@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { cors, escapeHtml, sendEmail, sendSms, supabaseAdmin, type Submission } from './_lib/server.js';
-
-const FRESH_WINDOW_MS = 15 * 60 * 1000;
+import { cors, escapeHtml, sendEmail, sendSms, supabaseAs, type Submission } from './_lib/server.js';
 
 /**
  * Called by the customer app straight after a bill is uploaded. Sends the customer a
@@ -15,26 +13,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const id = typeof req.body?.id === 'string' ? req.body.id : '';
   if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'Invalid id' });
 
-  const { data: sub, error } = await supabaseAdmin
-    .from('submissions')
-    .select('id, created_at, full_name, email, phone, postcode, bill_type, message, status, notified_at')
-    .eq('id', id)
-    .single<Submission>();
-
-  if (error || !sub) return res.status(404).json({ error: 'Submission not found' });
-  if (sub.notified_at) return res.status(200).json({ ok: true, alreadyNotified: true });
-  if (Date.now() - new Date(sub.created_at).getTime() > FRESH_WINDOW_MS) {
-    return res.status(410).json({ error: 'Submission too old to notify' });
-  }
-
-  // Claim the notification first so concurrent calls can't double-send.
-  const { data: claimed } = await supabaseAdmin
-    .from('submissions')
-    .update({ notified_at: new Date().toISOString() })
-    .eq('id', id)
-    .is('notified_at', null)
-    .select('id');
-  if (!claimed?.length) return res.status(200).json({ ok: true, alreadyNotified: true });
+  // claim_notification (see supabase/schema.sql) marks the submission as notified and returns it,
+  // but only once and only within 15 minutes of upload.
+  const { data, error } = await supabaseAs().rpc('claim_notification', { submission_id: id });
+  if (error) return res.status(500).json({ error: error.message });
+  const sub = (data as Submission[] | null)?.[0];
+  if (!sub) return res.status(200).json({ ok: true, skipped: 'already notified, too old or not found' });
 
   const firstName = sub.full_name.split(' ')[0];
   const ref = sub.id.slice(0, 8).toUpperCase();

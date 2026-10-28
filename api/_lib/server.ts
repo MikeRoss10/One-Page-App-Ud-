@@ -1,23 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL ?? '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-  { auth: { persistSession: false } },
-);
+/**
+ * Supabase client using the public anon key. Row level security does the access control:
+ * pass a logged-in user's access token to act as that user.
+ */
+export function supabaseAs(accessToken?: string) {
+  return createClient(
+    process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? '',
+    process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? '',
+    {
+      auth: { persistSession: false },
+      global: accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined,
+    },
+  );
+}
 
 export interface Submission {
   id: string;
-  created_at: string;
   full_name: string;
   email: string;
   phone: string;
   postcode: string | null;
   bill_type: string;
   message: string | null;
-  status: string;
-  notified_at: string | null;
+  status?: string;
 }
 
 /** CORS so the Android app (origin https://localhost) can call the API. Returns true if the request was a preflight. */

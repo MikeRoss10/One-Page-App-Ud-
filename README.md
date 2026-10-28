@@ -38,7 +38,7 @@ Staff (/#/admin)
    insert into public.admins (user_id) select id from auth.users where email = 'you@utilitydeals.com.au';
    ```
 5. **Authentication → Providers → Email**: turn off "Allow new users to sign up" so only users you add can log in.
-6. **Project Settings → API**: copy the *Project URL*, *anon public* key and *service_role* key.
+6. **Project Settings → API**: copy the *Project URL* and *anon public* key. (No service-role key is needed: the API relies on row level security.)
 
 ### 2. Resend (email)
 1. Sign up at <https://resend.com> and create an API key.
@@ -51,7 +51,7 @@ Staff (/#/admin)
 ### 4. Deploy to Vercel
 1. <https://vercel.com/new> → import this GitHub repo. The framework is detected as Vite; leave the defaults.
 2. Add these **Environment Variables** (see `.env.example`):
-   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, `TEAM_NOTIFY_EMAIL`, `SMS_PROVIDER`, `TEXTBELT_KEY` (or the `TWILIO_*` vars).
+   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, `TEAM_NOTIFY_EMAIL`, `SMS_PROVIDER`, `TEXTBELT_KEY` (or the `TWILIO_*` vars).
 3. Deploy. The customer page is at `/` and the staff dashboard at `/#/admin`.
 4. Optional: add `upload.utilitydeals.com.au` under **Settings → Domains**.
 

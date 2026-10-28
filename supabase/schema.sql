@@ -32,6 +32,23 @@ create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.admins where user_id = auth.uid());
 $$;
+revoke execute on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
+
+-- Used by /api/notify: marks a fresh submission as notified exactly once and returns
+-- what the confirmation email/SMS needs. Lets the API run with only the public anon key.
+create or replace function public.claim_notification(submission_id uuid)
+returns table (id uuid, full_name text, email text, phone text, postcode text, bill_type text, message text)
+language sql volatile security definer set search_path = public as $$
+  update public.submissions s
+     set notified_at = now()
+   where s.id = submission_id
+     and s.notified_at is null
+     and s.created_at > now() - interval '15 minutes'
+  returning s.id, s.full_name, s.email, s.phone, s.postcode, s.bill_type, s.message;
+$$;
+revoke execute on function public.claim_notification(uuid) from public;
+grant execute on function public.claim_notification(uuid) to anon, authenticated;
 
 -- 3. Row level security -------------------------------------------------------
 alter table public.submissions enable row level security;

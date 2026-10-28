@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env.local
+.vercel
+android/app/build
+android/build
+android/.gradle
+*.apk

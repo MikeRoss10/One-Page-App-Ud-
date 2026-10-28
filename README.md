@@ -2,6 +2,15 @@
 
 Customers upload an electricity or gas bill (as a photo or PDF) from the website or the Android app. They get a confirmation **email + SMS**, your team gets an alert, and staff review everything in an **admin dashboard**.
 
+## Live
+
+- Customer page: <https://utility-deals-bill-upload.vercel.app>
+- Staff dashboard: <https://utility-deals-bill-upload.vercel.app/#/admin>
+- Supabase project: `utility-deals` (ref `rnllxphefrppqotznxkb`, Sydney)
+- Vercel project: `utility-deals-bill-upload`
+
+Email and SMS stay off until `RESEND_API_KEY` and `SMS_PROVIDER` are set in Vercel (see below).
+
 | Piece | Service | Free tier |
 |---|---|---|
 | Website + API | **Vercel** (Hobby) | Free |

@@ -38,7 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const [emailResult, smsResult] = await Promise.all([
     email
       ? sendEmail(sub.email, `${copy.subject} (ref ${ref})`, copy.subject,
-          `<p>Hi ${escapeHtml(firstName)}, ${escapeHtml(copy.text)}</p><p>Reference: <strong>${ref}</strong></p><p>Cheers,<br/>The Utility Deals team</p>`)
+          `<p>Hi ${escapeHtml(firstName)}, ${escapeHtml(copy.text)}</p><p>Reference: <strong>${ref}</strong></p><p>Cheers,<br/>The Utility Deals team</p>`,
+          { type: 'status_update', data: { reference: ref, status: sub.status, full_name: sub.full_name, first_name: firstName, customer_email: sub.email } })
       : Promise.resolve('skipped'),
     sms ? sendSms(sub.phone, `Utility Deals (ref ${ref}): Hi ${firstName}, ${copy.text}`) : Promise.resolve('skipped'),
   ]);

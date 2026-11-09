@@ -42,34 +42,103 @@ export function cors(req: VercelRequest, res: VercelResponse): boolean {
 const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
+const SITE_URL = (process.env.PUBLIC_SITE_URL ?? 'https://utility-deals-bill-upload.vercel.app').replace(/\/$/, '');
+
 function emailLayout(title: string, bodyHtml: string): string {
-  return `<!doctype html><html><body style="margin:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937">
+  return `<!doctype html><html><body style="margin:0;background:#f4f8fb;font-family:Arial,Helvetica,sans-serif;color:#1c1c1c">
   <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px">
     <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden">
-      <tr><td style="background:#0b3d91;padding:20px 28px;color:#ffffff;font-size:20px;font-weight:bold">Utility <span style="color:#7ed957">Deals</span></td></tr>
+      <tr><td style="padding:20px 28px;border-bottom:4px solid #0c95cc">
+        <img src="${SITE_URL}/logo.png" alt="Utility Deals – Get better deals" width="190" style="display:block;height:auto;border:0" />
+      </td></tr>
       <tr><td style="padding:28px">
-        <h1 style="font-size:20px;margin:0 0 16px">${escapeHtml(title)}</h1>
+        <h1 style="font-size:20px;margin:0 0 16px;color:#036e9c">${escapeHtml(title)}</h1>
         ${bodyHtml}
       </td></tr>
-      <tr><td style="background:#f4f7fb;padding:16px 28px;font-size:12px;color:#6b7280">Utility Deals &middot; utilitydeals.com.au</td></tr>
+      <tr><td style="background:#036e9c;padding:16px 28px;font-size:12px;color:#ffffff">Utility Deals &middot; Get better deals &middot; utilitydeals.com.au</td></tr>
     </table>
   </td></tr></table></body></html>`;
 }
 
-export async function sendEmail(to: string, subject: string, title: string, bodyHtml: string): Promise<string> {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return 'skipped (RESEND_API_KEY not set)';
-  const r = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: process.env.EMAIL_FROM ?? 'Utility Deals <onboarding@resend.dev>',
-      to: [to],
-      subject,
-      html: emailLayout(title, bodyHtml),
-    }),
-  });
-  return r.ok ? 'sent' : `failed (${r.status}: ${await r.text()})`;
+const htmlToText = (html: string) =>
+  html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n').replace(/<[^>]+>/g, '').replace(/&middot;/g, '·')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, ' ').replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
+
+export interface EmailMeta {
+  /** What kind of email this is, e.g. "welcome", "team_alert", "status_update". Passed to Make. */
+  type: string;
+  /** Extra fields passed to a Make scenario (customer name, reference, ...). */
+  data?: Record<string, unknown>;
+}
+
+/**
+ * Sends an email with the first provider that is configured:
+ *  1. Gmail (GMAIL_USER + GMAIL_APP_PASSWORD) – sends from your own Google Workspace / Gmail mailbox
+ *  2. Make (MAKE_WEBHOOK_URL) – posts the email to a Make scenario, which sends it (e.g. with its Gmail module)
+ *  3. Resend (RESEND_API_KEY)
+ */
+export async function sendEmail(
+  to: string,
+  subject: string,
+  title: string,
+  bodyHtml: string,
+  meta: EmailMeta = { type: 'general' },
+): Promise<string> {
+  const html = emailLayout(title, bodyHtml);
+  const text = `${title}\n\n${htmlToText(bodyHtml)}`;
+  const fromName = process.env.EMAIL_FROM_NAME ?? 'Utility Deals';
+  const replyTo = process.env.EMAIL_REPLY_TO || undefined;
+
+  try {
+    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      const { default: nodemailer } = await import('nodemailer');
+      const transport = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD.replace(/\s/g, '') },
+      });
+      await transport.sendMail({
+        from: { name: fromName, address: process.env.EMAIL_FROM_ADDRESS || process.env.GMAIL_USER },
+        to,
+        replyTo,
+        subject,
+        html,
+        text,
+      });
+      return 'sent (gmail)';
+    }
+
+    if (process.env.MAKE_WEBHOOK_URL) {
+      const r = await fetch(process.env.MAKE_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: meta.type, to, subject, html, text, from_name: fromName, reply_to: replyTo, ...meta.data }),
+      });
+      return r.ok ? 'sent (make)' : `failed (make ${r.status}: ${await r.text()})`;
+    }
+
+    if (process.env.RESEND_API_KEY) {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: process.env.EMAIL_FROM ?? `${fromName} <onboarding@resend.dev>`,
+          to: [to],
+          reply_to: replyTo,
+          subject,
+          html,
+          text,
+        }),
+      });
+      return r.ok ? 'sent (resend)' : `failed (resend ${r.status}: ${await r.text()})`;
+    }
+  } catch (err) {
+    return `failed (${err instanceof Error ? err.message : String(err)})`;
+  }
+
+  return 'skipped (no email provider configured: set GMAIL_USER + GMAIL_APP_PASSWORD, or MAKE_WEBHOOK_URL)';
 }
 
 /** Australian mobiles typed as 04xx xxx xxx become +614xxxxxxxx. */

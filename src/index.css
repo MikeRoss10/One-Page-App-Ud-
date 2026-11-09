@@ -3,19 +3,22 @@
    Everything else in the app (and the APK) picks them up automatically.
    ========================================================================== */
 :root {
-  --brand-primary: #0b3d91;      /* deep blue: header, headings, primary buttons */
-  --brand-primary-dark: #082c69;
-  --brand-accent: #7ed957;       /* energy green: highlights, logo bolt */
-  --brand-accent-dark: #5cb836;
-  --bg: #f4f7fb;
+  /* Taken from the Utility Deals logo */
+  --brand-primary: #036e9c;      /* deep logo blue: hero, headings */
+  --brand-primary-dark: #024f72;
+  --brand-accent: #0c95cc;       /* bright logo blue: buttons, highlights */
+  --brand-accent-dark: #0a7fae;
+  --brand-accent-light: #bfe9fb; /* readable highlight on the blue hero */
+  --brand-ink: #1c1c1c;          /* logo charcoal: body text */
+  --bg: #f4f8fb;
   --surface: #ffffff;
-  --text: #1f2937;
+  --text: var(--brand-ink);
   --muted: #6b7280;
   --border: #e5e7eb;
   --danger: #dc2626;
   --success: #15803d;
   --radius: 14px;
-  --shadow: 0 10px 30px rgba(11, 61, 145, 0.08);
+  --shadow: 0 10px 30px rgba(3, 110, 156, 0.08);
   --font: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -36,24 +39,24 @@ h1, h2 { color: var(--brand-primary); line-height: 1.2; }
 .container.narrow { max-width: 480px; padding-top: 40px; padding-bottom: 40px; }
 
 /* Header */
-.header { background: var(--brand-primary); color: #fff; padding-top: env(safe-area-inset-top); position: sticky; top: 0; z-index: 10; }
-.header-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-.logo { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-size: 20px; }
-.logo strong { color: var(--brand-accent); }
-.header-link { color: #fff; opacity: 0.85; text-decoration: none; font-size: 14px; }
-.header-link:hover { opacity: 1; }
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top); position: sticky; top: 0; z-index: 10; }
+.header-inner { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+.logo { display: flex; align-items: center; }
+.logo img { height: 48px; width: auto; display: block; }
+.header-link { color: var(--brand-primary); text-decoration: none; font-size: 14px; font-weight: 500; }
+.header-link:hover { color: var(--brand-accent); }
 
 /* Hero */
 .hero { background: linear-gradient(160deg, var(--brand-primary) 0%, var(--brand-primary-dark) 55%, var(--bg) 55.1%); padding: 40px 0 60px; }
 .hero-inner { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: start; }
 .hero h1 { color: #fff; font-size: clamp(30px, 4.5vw, 46px); margin: 16px 0; }
-.hero .accent { color: var(--brand-accent); }
+.hero .accent { color: var(--brand-accent-light); }
 .hero .lead { color: rgba(255, 255, 255, 0.85); }
-.pill { display: inline-block; background: rgba(126, 217, 87, 0.18); color: var(--brand-accent); border: 1px solid rgba(126, 217, 87, 0.4); padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+.pill { display: inline-block; background: rgba(255, 255, 255, 0.14); color: #fff; border: 1px solid rgba(255, 255, 255, 0.35); padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; }
 .lead { font-size: 17px; line-height: 1.6; }
 .steps { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 12px; color: #fff; }
 .steps li { display: flex; align-items: center; gap: 12px; font-weight: 500; }
-.steps span { width: 32px; height: 32px; border-radius: 50%; background: var(--brand-accent); color: var(--brand-primary); display: grid; place-items: center; font-weight: 700; flex: none; }
+.steps span { width: 32px; height: 32px; border-radius: 50%; background: #fff; color: var(--brand-primary); display: grid; place-items: center; font-weight: 700; flex: none; }
 
 /* Cards & forms */
 .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; }
@@ -65,16 +68,16 @@ label em { font-weight: 400; color: var(--muted); }
 input, select, textarea {
   font: inherit; font-size: 16px; padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); width: 100%;
 }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(11, 61, 145, 0.12); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(12, 149, 204, 0.18); }
 .checkbox { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
 .checkbox input { width: 18px; height: 18px; margin-top: 2px; flex: none; accent-color: var(--brand-primary); }
 
 .dropzone {
-  border: 2px dashed #c7d2e5; border-radius: 12px; padding: 26px 16px; text-align: center; cursor: pointer;
+  border: 2px dashed #b9dcec; border-radius: 12px; padding: 26px 16px; text-align: center; cursor: pointer;
   display: grid; gap: 6px; background: #f8fafd; transition: 0.15s;
 }
-.dropzone:hover, .dropzone.dragging { border-color: var(--brand-primary); background: #eef3fb; }
-.dropzone.has-file { border-style: solid; border-color: var(--brand-accent); background: #f2fbee; }
+.dropzone:hover, .dropzone.dragging { border-color: var(--brand-accent); background: #eef8fc; }
+.dropzone.has-file { border-style: solid; border-color: var(--brand-accent); background: #e8f6fc; }
 .dropzone small { color: var(--muted); }
 
 .btn {
@@ -82,12 +85,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
   display: inline-flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.15s;
 }
 .btn:disabled { opacity: 0.6; cursor: wait; }
-.btn-primary { background: var(--brand-accent); color: var(--brand-primary); }
+.btn-primary { background: var(--brand-accent); color: #fff; }
 .btn-primary:hover:not(:disabled) { background: var(--brand-accent-dark); }
 .btn-secondary { background: #eef2f7; color: var(--brand-primary); }
 .btn-secondary:hover { background: #e2e8f1; }
 .btn-ghost { background: transparent; color: inherit; }
-.header .btn-ghost { color: #fff; }
+.header .btn-ghost { color: var(--brand-primary); }
 .btn-danger { background: #fee2e2; color: var(--danger); }
 .btn-block { width: 100%; }
 .btn-link { background: none; border: 0; color: var(--brand-primary); cursor: pointer; font: inherit; font-size: 14px; }
@@ -101,10 +104,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .center { text-align: center; display: grid; justify-items: center; gap: 8px; }
 .center-screen { min-height: 100vh; display: grid; place-items: center; }
 
-.big-check { width: 72px; height: 72px; border-radius: 50%; background: var(--brand-accent); color: var(--brand-primary); font-size: 38px; font-weight: 700; display: grid; place-items: center; }
+.big-check { width: 72px; height: 72px; border-radius: 50%; background: var(--brand-accent); color: #fff; font-size: 38px; font-weight: 700; display: grid; place-items: center; }
 .ref { background: var(--bg); padding: 10px 16px; border-radius: 10px; }
 
-.spinner { width: 32px; height: 32px; border: 3px solid #dbe3ef; border-top-color: var(--brand-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 24px auto; }
+.spinner { width: 32px; height: 32px; border: 3px solid #d6ecf6; border-top-color: var(--brand-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 24px auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Admin */
@@ -121,7 +124,7 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th { text-align: left; padding: 12px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); border-bottom: 1px solid var(--border); }
 td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
 tbody tr { cursor: pointer; }
-tbody tr:hover, tbody tr.selected { background: #f5f8fc; }
+tbody tr:hover, tbody tr.selected { background: #f1f8fc; }
 .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .badge-new { background: #dbeafe; color: #1d4ed8; }
 .badge-reviewing { background: #fef3c7; color: #b45309; }
@@ -152,6 +155,8 @@ tbody tr:hover, tbody tr.selected { background: #f5f8fc; }
   .stats { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 480px) {
+  .header-inner { height: 60px; }
+  .logo img { height: 38px; }
   .row { grid-template-columns: 1fr; }
   .card { padding: 18px; }
 }

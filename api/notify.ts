@@ -23,29 +23,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const firstName = sub.full_name.split(' ')[0];
   const ref = sub.id.slice(0, 8).toUpperCase();
 
+  const teamInbox = process.env.TEAM_NOTIFY_EMAIL || process.env.GMAIL_USER;
+  const details = {
+    reference: ref,
+    full_name: sub.full_name,
+    first_name: firstName,
+    customer_email: sub.email,
+    phone: sub.phone,
+    postcode: sub.postcode,
+    bill_type: sub.bill_type,
+    message: sub.message,
+  };
+
   const [customerEmail, customerSms, teamEmail] = await Promise.all([
     sendEmail(
       sub.email,
-      `We've received your bill (ref ${ref})`,
-      `Thanks ${firstName}, we've got your bill!`,
-      `<p>Our energy experts will review your ${escapeHtml(sub.bill_type)} bill and get back to you with the best deal we can find, usually within 1–2 business days.</p>
-       <p style="background:#f4f7fb;border-radius:8px;padding:12px 16px">Your reference: <strong>${ref}</strong></p>
-       <p>If you have any questions just reply to this email.</p>
+      `Welcome to Utility Deals, ${firstName}! (ref ${ref})`,
+      `Welcome to Utility Deals, ${firstName}!`,
+      `<p>Thanks for choosing Utility Deals. We've received your ${escapeHtml(sub.bill_type)} bill and our energy experts are already on it.</p>
+       <p style="background:#e8f6fc;border-left:4px solid #0c95cc;border-radius:6px;padding:12px 16px;margin:20px 0">
+         Your reference: <strong style="color:#036e9c">${ref}</strong>
+       </p>
+       <p><strong style="color:#036e9c">What happens next</strong></p>
+       <ol style="padding-left:20px;margin:0 0 16px">
+         <li style="margin-bottom:6px">We review your bill and usage.</li>
+         <li style="margin-bottom:6px">We compare it against plans on the market.</li>
+         <li>We get back to you with your savings, usually within 1–2 business days.</li>
+       </ol>
+       <p>Got a question in the meantime? Just reply to this email.</p>
        <p>Cheers,<br/>The Utility Deals team</p>`,
+      { type: 'welcome', data: details },
     ),
     sendSms(
       sub.phone,
-      `Hi ${firstName}, thanks for sending your bill to Utility Deals (ref ${ref}). Our team will review it and be in touch within 1-2 business days.`,
+      `Hi ${firstName}, welcome to Utility Deals! We've received your bill (ref ${ref}). Our team will review it and be in touch within 1-2 business days.`,
     ),
-    process.env.TEAM_NOTIFY_EMAIL
+    teamInbox
       ? sendEmail(
-          process.env.TEAM_NOTIFY_EMAIL,
+          teamInbox,
           `New bill uploaded: ${sub.full_name} (${ref})`,
           'New bill uploaded',
           `<p><strong>${escapeHtml(sub.full_name)}</strong><br/>${escapeHtml(sub.email)}<br/>${escapeHtml(sub.phone)}</p>
            <p>Type: ${escapeHtml(sub.bill_type)}${sub.postcode ? ` &middot; Postcode ${escapeHtml(sub.postcode)}` : ''}</p>
            ${sub.message ? `<p>${escapeHtml(sub.message)}</p>` : ''}
            <p>Open the admin dashboard to review it.</p>`,
+          { type: 'team_alert', data: details },
         )
       : Promise.resolve('skipped (TEAM_NOTIFY_EMAIL not set)'),
   ]);

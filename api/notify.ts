@@ -72,5 +72,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : Promise.resolve('skipped (TEAM_NOTIFY_EMAIL not set)'),
   ]);
 
+  console.log(`[notify] ${ref} customerEmail=${customerEmail} customerSms=${customerSms} teamEmail=${teamEmail}`);
   return res.status(200).json({ ok: true, customerEmail, customerSms, teamEmail });
 }

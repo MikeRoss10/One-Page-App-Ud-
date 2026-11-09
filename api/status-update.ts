@@ -44,5 +44,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sms ? sendSms(sub.phone, `Utility Deals (ref ${ref}): Hi ${firstName}, ${copy.text}`) : Promise.resolve('skipped'),
   ]);
 
+  console.log(`[status-update] ${ref} status=${sub.status} email=${emailResult} sms=${smsResult}`);
   return res.status(200).json({ ok: true, email: emailResult, sms: smsResult });
 }
